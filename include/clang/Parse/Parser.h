@@ -186,6 +186,7 @@ class Parser : public CodeCompletionHandler {
   std::unique_ptr<PragmaHandler> NoUnrollHintHandler;
   std::unique_ptr<PragmaHandler> FPHandler;
   std::unique_ptr<PragmaHandler> AttributePragmaHandler;
+  std::unique_ptr<PragmaHandler> NvmPragmaHandler;
 
   std::unique_ptr<CommentHandler> CommentSemaHandler;
 

@@ -39,6 +39,8 @@
 #include "llvm/Transforms/Utils/SanitizerStats.h"
 
 #include <string>
+#include <iostream>
+#include <sstream>
 
 using namespace clang;
 using namespace CodeGen;
@@ -1657,6 +1659,17 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, Address Addr,
     EmitAtomicStore(RValue::get(Value), AtomicLValue, isInit);
     return;
   }
+
+  // TODO: If Addr is NVM, generate NVM log writing functions
+  std::string s;
+  llvm::raw_string_ostream ss(s);
+  Addr.getPointer()->print(ss);
+
+  std::cout << "CGExpr.cpp:EmitStoreOfScalar(): Before CreateStore() \n  lhs: " << s << std::endl;
+
+  s = "";
+  Value->print(ss);
+  std::cout << "  rhs: " << s << std::endl;
 
   llvm::StoreInst *Store = Builder.CreateStore(Value, Addr, Volatile);
   if (isNontemporal) {

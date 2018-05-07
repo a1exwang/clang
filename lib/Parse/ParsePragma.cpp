@@ -11,6 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <sstream>
+#include <clang/Basic/TokenKinds.h>
+#include <iostream>
 #include "clang/AST/ASTContext.h"
 #include "clang/Basic/PragmaKinds.h"
 #include "clang/Basic/TargetInfo.h"
@@ -203,6 +206,42 @@ struct PragmaAttributeHandler : public PragmaHandler {
   ParsedAttributes AttributesForPragmaAttribute;
 };
 
+struct PragmaNvmHandler :public PragmaHandler {
+  PragmaNvmHandler()
+        : PragmaHandler("nvm") {
+    std::cout << "PragmaNvmHandler()" << std::endl;
+  }
+  void HandlePragma(
+      Preprocessor &PP,
+      PragmaIntroducerKind Introducer,
+      Token &FirstToken) override {
+    std::cout << "PragmaNvmHandler::HandlePragma()" << std::endl;
+
+    SmallVector<Token, 16> Pragma;
+    Token Tok;
+    Tok.startToken();
+    Tok.setKind(tok::annot_pragma_nvm);
+    Tok.setLocation(FirstToken.getLocation());
+
+    while (Tok.isNot(tok::eod)) {
+      Pragma.push_back(Tok);
+      PP.Lex(Tok);
+    }
+    SourceLocation EodLoc = Tok.getLocation();
+    Tok.startToken();
+    Tok.setKind(tok::annot_pragma_nvm_end);
+    Tok.setLocation(EodLoc);
+    Pragma.push_back(Tok);
+
+    auto Toks = llvm::make_unique<Token[]>(Pragma.size());
+    std::copy(Pragma.begin(), Pragma.end(), Toks.get());
+    PP.EnterTokenStream(std::move(Toks), Pragma.size(),
+        /*DisableMacroExpansion=*/false);
+    std::cout << "PragmaNvmHandler::HandlePragma() returns" << std::endl;
+  }
+
+};
+
 }  // end namespace
 
 void Parser::initializePragmaHandlers() {
@@ -301,6 +340,9 @@ void Parser::initializePragmaHandlers() {
 
   AttributePragmaHandler.reset(new PragmaAttributeHandler(AttrFactory));
   PP.AddPragmaHandler("clang", AttributePragmaHandler.get());
+
+  NvmPragmaHandler.reset(new PragmaNvmHandler());
+  PP.AddPragmaHandler("clang", NvmPragmaHandler.get());
 }
 
 void Parser::resetPragmaHandlers() {
@@ -1419,6 +1461,7 @@ void Parser::HandlePragmaAttribute() {
   Actions.ActOnPragmaAttributePush(Attribute, PragmaLoc,
                                    std::move(SubjectMatchRules));
 }
+
 
 // #pragma GCC visibility comes in two variants:
 //   'push' '(' [visibility] ')'

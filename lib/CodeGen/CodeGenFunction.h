@@ -1093,6 +1093,11 @@ private:
   };
   SmallVector<BreakContinue, 8> BreakContinueStack;
 
+  struct NvmTransactions {
+    NvmTransactions();
+  };
+  SmallVector<NvmTransactions, 8> NvmTransactionsStack;
+
   /// Handles cancellation exit points in OpenMP-related constructs.
   class OpenMPCancelExitStack {
     /// Tracks cancellation exit point and join point for cancel-related exit

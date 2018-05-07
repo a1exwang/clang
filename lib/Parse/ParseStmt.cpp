@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Basic/TokenKinds.h"
 #include "clang/Basic/Attributes.h"
 #include "clang/Basic/PrettyStackTrace.h"
 #include "clang/Parse/Parser.h"
@@ -21,6 +22,9 @@
 #include "clang/Sema/PrettyDeclStackTrace.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/TypoCorrection.h"
+#include <iostream>
+#include <clang/Basic/TokenKinds.h>
+
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -387,7 +391,99 @@ Retry:
   case tok::annot_pragma_attribute:
     HandlePragmaAttribute();
     return StmtEmpty();
+  case tok::annot_pragma_nvm:
+    ProhibitAttributes(Attrs);
+    // #pragma clang nvm tx ptrs(a, b, c)
+
+    SmallVector<char* , 8> Annotations;
+    auto Where = Tok.getLocation();
+    Tok.getAnnotationValue();
+    // Consume 'nvm'
+    ConsumeAnnotationToken();
+
+    if (!Tok.isAnyIdentifier()) {
+      Diag(Tok.getLocation(), diag::err_expect_pragma_nvm_end) << "unexpected token '" << Tok.getKind();
+      return StmtError();
+    }
+
+    // Get NVM Operation name
+    auto Op = Tok.getIdentifierInfo()->getName();
+    if (Op != "tx") {
+      Diag(Tok.getLocation(), diag::err_invalid_pragma_nvm) << "invalid operation name '" << Op << "'";
+      return StmtError();
+    }
+    // Consume operation name, e.g. 'tx'
+    ConsumeToken();
+
+    // Consume 'ptrs'
+    ConsumeToken();
+
+    if (!Tok.is(tok::l_paren)) {
+      Diag(Tok.getLocation(), diag::err_expect_pragma_nvm_end) << "expect '('";
+      return StmtError();
+    }
+    // Consume '('
+    ConsumeParen();
+
+    SmallVector<Expr *, 8> Identifiers;
+    while (true) {
+      if (Tok.isAnyIdentifier()) {
+        CXXScopeSpec SS;
+        UnqualifiedId Name;
+        SourceLocation TemplateKWLoc;
+        // This automaticall consumes the Identifier token
+        if (ParseUnqualifiedId(SS, false, false, false, false, nullptr, TemplateKWLoc, Name)) {
+          // ParseUnqualifiedId returning false means failure
+          Diag(Tok.getLocation(), diag::err_expect_pragma_nvm_end) << "unexpected token '" << Tok.getKind();
+          return StmtError();
+        }
+
+        auto NameInfo = Actions.GetNameFromUnqualifiedId(Name);
+        auto R = Actions.ActOnPragmaNvmIdExpression(getCurScope(), SS, NameInfo);
+        Identifiers.push_back(R.get());
+        std::cerr << "Parse annot_pragma_nvm, Identifier: \n  ";
+        R.get()->dump();
+
+        // Consume optional ','
+        if (Tok.is(tok::comma)) {
+          ConsumeToken();
+        }
+      } else if (Tok.is(tok::r_paren)) {
+        // Consume ')'
+        ConsumeParen();
+        break;
+      } else {
+        Diag(Tok.getLocation(), diag::err_expect_pragma_nvm_end) << "unexpected token '" << Tok.getKind();
+        return StmtError();
+      }
+    }
+    // Consume annot_pragma_nvm_end
+    ConsumeAnnotationToken();
+
+
+    Sema::CompoundScopeRAII CompoundScope(Actions);
+//    Actions.ActOnNvmTxRegionStart(DKind, getCurScope());
+      Actions.ActOnCapturedRegionStart(
+          SourceLocation(),
+          getCurScope(),
+          CapturedRegionKind::CR_Default,
+          {
+              std::make_pair(StringRef(), QualType()) // __context with shared vars
+          }
+      );
+    Actions.ActOnStartOfCompoundStmt();
+    // Parse statement
+    auto S = ParseStatement();
+    Actions.ActOnFinishOfCompoundStmt();
+    S = Actions.ActOnCapturedRegionEnd(S.get());
+//    auto AssociatedStmt = Actions.ActOnNvmRegionEnd(S, Clauses);
+
+    StmtResult SR = Actions.ActOnPragmaNvm(S, Annotations, &Where);
+    std::for_each(Annotations.begin(), Annotations.end(), free);
+    std::cout << "ParseStmt annot_pragma_nvm success" << std::endl;
+    return SR;
   }
+
 
   // If we reached this code, the statement must end in a semicolon.
   if (!TryConsumeToken(tok::semi) && !Res.isInvalid()) {

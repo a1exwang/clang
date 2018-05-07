@@ -808,6 +808,10 @@ ANNOTATION(module_include)
 ANNOTATION(module_begin)
 ANNOTATION(module_end)
 
+// Annotation for NVM
+ANNOTATION(pragma_nvm)
+ANNOTATION(pragma_nvm_end)
+
 #undef ANNOTATION
 #undef TESTING_KEYWORD
 #undef OBJC2_AT_KEYWORD

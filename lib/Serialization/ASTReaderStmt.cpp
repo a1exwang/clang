@@ -617,6 +617,11 @@ void ASTStmtReader::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
   E->setRBracketLoc(ReadSourceLocation());
 }
 
+
+void ASTStmtReader::VisitNvmTxStmt(NvmTxStmt *S) {
+  S->SetAssociatedStmt(Record.readStmt());
+}
+
 void ASTStmtReader::VisitOMPArraySectionExpr(OMPArraySectionExpr *E) {
   VisitExpr(E);
   E->setBase(Record.readSubExpr());

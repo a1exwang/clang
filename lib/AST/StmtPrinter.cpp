@@ -591,6 +591,11 @@ void StmtPrinter::VisitSEHLeaveStmt(SEHLeaveStmt *Node) {
   if (Policy.IncludeNewlines) OS << "\n";
 }
 
+void StmtPrinter::VisitNvmTxStmt(NvmTxStmt *Node) {
+  Indent() << "NvmTxStmt" << "\n";
+  VisitStmt(Node->GetAssociatedStmt());
+}
+
 //===----------------------------------------------------------------------===//
 //  OpenMP clauses printing methods
 //===----------------------------------------------------------------------===//

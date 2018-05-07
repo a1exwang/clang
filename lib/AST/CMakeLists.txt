@@ -57,6 +57,7 @@ add_clang_library(clangAST
   Stmt.cpp
   StmtCXX.cpp
   StmtIterator.cpp
+  StmtNvm.cpp
   StmtObjC.cpp
   StmtOpenMP.cpp
   StmtPrinter.cpp

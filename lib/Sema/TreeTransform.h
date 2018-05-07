@@ -25,6 +25,7 @@
 #include "clang/AST/ExprOpenMP.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/StmtCXX.h"
+#include "clang/AST/StmtNvm.h"
 #include "clang/AST/StmtObjC.h"
 #include "clang/AST/StmtOpenMP.h"
 #include "clang/Sema/Designator.h"
@@ -3295,6 +3296,13 @@ StmtResult TreeTransform<Derived>::TransformStmt(Stmt *S) {
   }
 
   return S;
+}
+
+
+template <typename Derived>
+StmtResult
+TreeTransform<Derived>::TransformNvmTxStmt(NvmTxStmt *S) {
+  return S->GetAssociatedStmt();
 }
 
 template<typename Derived>

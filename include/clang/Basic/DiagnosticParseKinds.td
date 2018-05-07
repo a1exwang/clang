@@ -1163,4 +1163,11 @@ def err_for_co_await_not_range_for : Error<
   "'co_await' modifier can only be applied to range-based for loop">;
 }
 
+let CategoryName = "NVM Issue" in {
+def err_expect_pragma_nvm_end : Error<
+  "expect pragma nvm end">;
+def err_invalid_pragma_nvm : Error<
+  "invalid syntax for pragma nvm">;
+}
+
 } // end of Parser diagnostics

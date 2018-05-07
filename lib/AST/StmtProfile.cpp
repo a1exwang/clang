@@ -379,6 +379,11 @@ StmtProfiler::VisitObjCAutoreleasePoolStmt(const ObjCAutoreleasePoolStmt *S) {
   VisitStmt(S);
 }
 
+void
+StmtProfiler::VisitNvmTxStmt(const NvmTxStmt *S) {
+  VisitStmt(S->GetAssociatedStmt());
+}
+
 namespace {
 class OMPClauseProfiler : public ConstOMPClauseVisitor<OMPClauseProfiler> {
   StmtProfiler *Profiler;
