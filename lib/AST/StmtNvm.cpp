@@ -4,16 +4,27 @@
 
 using namespace clang;
 
-NvmTxStmt::NvmTxStmt(Stmt *stmt) :Stmt(NvmTxStmtClass), AssociatedStmt(stmt){}
+NvmTxStmt::NvmTxStmt(
+    Stmt *AssociatedStmt,
+    SourceLocation StartLoc,
+    SourceLocation EndLoc,
+    Expr *Pool,
+    Expr *Tx
+) :Stmt(NvmTxStmtClass), AssociatedStmt(AssociatedStmt), StartLoc(StartLoc), EndLoc(EndLoc), Pool(Pool), Tx(Tx) {}
 
 NvmTxStmt*
-NvmTxStmt::Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc, Stmt *AssociatedStmt) {
+NvmTxStmt::Create(
+    const ASTContext &C,
+    Stmt *AssociatedStmt,
+    SourceLocation StartLoc,
+    SourceLocation EndLoc,
+    Expr *Pool,
+    Expr *Tx
+) {
 
-  unsigned Size =
-      llvm::alignTo(sizeof(NvmTxStmt), alignof(Stmt *));
-  void *Mem =
-      C.Allocate(Size + sizeof(Stmt *));
-  return new (Mem) NvmTxStmt(AssociatedStmt);
+  uint64_t Size = llvm::alignTo(sizeof(NvmTxStmt), alignof(Stmt *));
+  void *Mem = C.Allocate(Size + sizeof(Stmt *));
+  return new (Mem) NvmTxStmt(AssociatedStmt, StartLoc, EndLoc, Pool, Tx);
 }
 
 bool NvmTxStmt::classof(const Stmt *T) {

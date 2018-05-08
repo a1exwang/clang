@@ -30,9 +30,22 @@ namespace clang {
 ///
   class NvmTxStmt: public Stmt {
   protected:
-    NvmTxStmt(Stmt *stmt);
+    NvmTxStmt(
+        Stmt *AssociatedStmt,
+        SourceLocation StartLoc,
+        SourceLocation EndLoc,
+        Expr *Pool,
+        Expr *Tx
+    );
   public:
-    static NvmTxStmt* Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc, Stmt *AssociatedStmt);
+    static NvmTxStmt* Create(
+        const ASTContext &C,
+        Stmt *AssociatedStmt,
+        SourceLocation StartLoc,
+        SourceLocation EndLoc,
+        Expr *Pool,
+        Expr *Tx
+    );
 
     child_range children() {
       return child_range(&AssociatedStmt, &AssociatedStmt+1);
@@ -44,9 +57,16 @@ namespace clang {
     /// \brief Returns ending location of directive.
     SourceLocation getLocEnd() const { return SourceLocation(); }
     Stmt *GetAssociatedStmt() const { return AssociatedStmt; }
+    Expr *GetPool() const { return Pool; }
+    Expr *GetTx() const { return Tx; }
+
     void SetAssociatedStmt(Stmt *stmt) { AssociatedStmt = stmt; }
   private:
     Stmt *AssociatedStmt;
+    SourceLocation StartLoc;
+    SourceLocation EndLoc;
+    Expr *Pool;
+    Expr *Tx;
   };
 
 } // end namespace clang

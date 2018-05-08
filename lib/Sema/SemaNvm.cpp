@@ -9,14 +9,16 @@ using namespace clang;
 using namespace sema;
 
 
-StmtResult Sema::ActOnPragmaNvm(StmtResult &Result, SmallVector<char* , 8> &Annotations, SourceLocation *loc) {
-  std::cerr << "CGStmt: ActOnPragmaNvm(), stmts: " << std::endl;
-  return NvmTxStmt::Create(Context, SourceLocation(), SourceLocation(), Result.get());
-//  DeclStmt *stmt = cast<DeclStmt>(Result.get());
-//  VarDecl *varDecl = cast<VarDecl>(stmt->getSingleDecl());
-//  varDecl->getType().dump();
-//  CS->dump();
-//  return Result;
+StmtResult Sema::ActOnPragmaNvm(StmtResult &Result, Expr *Pool, Expr *Tx, SourceLocation *loc) {
+  std::cerr << "SemaNvm.cpp: ActOnPragmaNvm(), stmts: " << std::endl;
+  return NvmTxStmt::Create(
+      Context,
+      Result.get(),
+      *loc,
+      *loc,
+      Pool,
+      Tx
+  );
 }
 
 ExprResult Sema::ActOnPragmaNvmIdExpression(Scope *CurScope,
@@ -105,6 +107,8 @@ ExprResult Sema::ActOnPragmaNvmIdExpression(Scope *CurScope,
 //    return ExprError();
 //  }
 
+  VD->setReferenced(true);
+  VD->markUsed(Context);
   QualType ExprType = VD->getType().getNonReferenceType();
   return DeclRefExpr::Create(Context, NestedNameSpecifierLoc(),
                              SourceLocation(), VD,

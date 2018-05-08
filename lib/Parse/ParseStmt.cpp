@@ -406,7 +406,7 @@ Retry:
       return StmtError();
     }
 
-    // Get NVM Operation name
+    // Get NVM Operation name, e.g 'tx'
     auto Op = Tok.getIdentifierInfo()->getName();
     if (Op != "tx") {
       Diag(Tok.getLocation(), diag::err_invalid_pragma_nvm) << "invalid operation name '" << Op << "'";
@@ -414,6 +414,42 @@ Retry:
     }
     // Consume operation name, e.g. 'tx'
     ConsumeToken();
+
+    ExprResult Pool, Tx;
+    // Consume '('
+    ConsumeParen();
+
+    if (Tok.isAnyIdentifier()) {
+      CXXScopeSpec SS;
+      UnqualifiedId Name;
+      SourceLocation TemplateKWLoc;
+      // This automaticall consumes the Identifier token
+      if (ParseUnqualifiedId(SS, false, false, false, false, nullptr, TemplateKWLoc, Name)) {
+        // ParseUnqualifiedId returning false means failure
+        Diag(Tok.getLocation(), diag::err_expect_pragma_nvm_end) << "unexpected token '" << Tok.getKind();
+        return StmtError();
+      }
+      auto NameInfo = Actions.GetNameFromUnqualifiedId(Name);
+      Pool = Actions.ActOnPragmaNvmIdExpression(getCurScope(), SS, NameInfo);
+    }
+    if (Tok.is(tok::comma))
+      ConsumeToken();
+    if (Tok.isAnyIdentifier()) {
+      CXXScopeSpec SS;
+      UnqualifiedId Name;
+      SourceLocation TemplateKWLoc;
+      // This automaticall consumes the Identifier token
+      if (ParseUnqualifiedId(SS, false, false, false, false, nullptr, TemplateKWLoc, Name)) {
+        // ParseUnqualifiedId returning false means failure
+        Diag(Tok.getLocation(), diag::err_expect_pragma_nvm_end) << "unexpected token '" << Tok.getKind();
+        return StmtError();
+      }
+      auto NameInfo = Actions.GetNameFromUnqualifiedId(Name);
+      Tx = Actions.ActOnPragmaNvmIdExpression(getCurScope(), SS, NameInfo);
+    }
+
+    // Consume ')'
+    ConsumeParen();
 
     // Consume 'ptrs'
     ConsumeToken();
@@ -424,8 +460,7 @@ Retry:
     }
     // Consume '('
     ConsumeParen();
-
-    SmallVector<Expr *, 8> Identifiers;
+    SmallVector<Expr *, 8> PtrIdentifiers;
     while (true) {
       if (Tok.isAnyIdentifier()) {
         CXXScopeSpec SS;
@@ -440,7 +475,7 @@ Retry:
 
         auto NameInfo = Actions.GetNameFromUnqualifiedId(Name);
         auto R = Actions.ActOnPragmaNvmIdExpression(getCurScope(), SS, NameInfo);
-        Identifiers.push_back(R.get());
+        PtrIdentifiers.push_back(R.get());
         std::cerr << "Parse annot_pragma_nvm, Identifier: \n  ";
         R.get()->dump();
 
@@ -460,25 +495,24 @@ Retry:
     // Consume annot_pragma_nvm_end
     ConsumeAnnotationToken();
 
-
-    Sema::CompoundScopeRAII CompoundScope(Actions);
+//    Sema::CompoundScopeRAII CompoundScope(Actions);
 //    Actions.ActOnNvmTxRegionStart(DKind, getCurScope());
-      Actions.ActOnCapturedRegionStart(
-          SourceLocation(),
-          getCurScope(),
-          CapturedRegionKind::CR_Default,
-          {
-              std::make_pair(StringRef(), QualType()) // __context with shared vars
-          }
-      );
-    Actions.ActOnStartOfCompoundStmt();
+//      Actions.ActOnCapturedRegionStart(
+//          SourceLocation(),
+//          getCurScope(),
+//          CapturedRegionKind::CR_Default,
+//          {
+//              std::make_pair(StringRef(), QualType()) // __context with shared vars
+//          }
+//      );
+//    Actions.ActOnStartOfCompoundStmt();
     // Parse statement
     auto S = ParseStatement();
-    Actions.ActOnFinishOfCompoundStmt();
-    S = Actions.ActOnCapturedRegionEnd(S.get());
+//    Actions.ActOnFinishOfCompoundStmt();
+//    S = Actions.ActOnCapturedRegionEnd(S.get());
 //    auto AssociatedStmt = Actions.ActOnNvmRegionEnd(S, Clauses);
 
-    StmtResult SR = Actions.ActOnPragmaNvm(S, Annotations, &Where);
+    StmtResult SR = Actions.ActOnPragmaNvm(S, Pool.get(), Tx.get(), &Where);
     std::for_each(Annotations.begin(), Annotations.end(), free);
     std::cout << "ParseStmt annot_pragma_nvm success" << std::endl;
     return SR;

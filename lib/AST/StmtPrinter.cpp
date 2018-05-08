@@ -593,6 +593,8 @@ void StmtPrinter::VisitSEHLeaveStmt(SEHLeaveStmt *Node) {
 
 void StmtPrinter::VisitNvmTxStmt(NvmTxStmt *Node) {
   Indent() << "NvmTxStmt" << "\n";
+  VisitStmt(Node->GetPool());
+  VisitStmt(Node->GetTx());
   VisitStmt(Node->GetAssociatedStmt());
 }
 

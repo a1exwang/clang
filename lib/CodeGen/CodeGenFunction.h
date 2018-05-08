@@ -1093,10 +1093,23 @@ private:
   };
   SmallVector<BreakContinue, 8> BreakContinueStack;
 
-  struct NvmTransactions {
-    NvmTransactions();
+  struct NvmTransaction {
+    NvmTransaction(llvm::Value *NvmPool, llvm::Value *NvmTx) :NvmPool(NvmPool), NvmTx(NvmTx) {}
+
+    llvm::Value *NvmPool;
+    llvm::Value *NvmTx;
+    // int nvm_add(nvm_pool *ppool, nvm_tx *tx, uint64_t offset, uint64_t len);
+    llvm::Value *GetFnNvmAdd(llvm::Module *mod);
+    // nvm_tx *nvm_start_tx(nvm_pool *ppool);
+    llvm::Value *GetFnNvmStartTx(llvm::Module *mod);
+    // int *nvm_commit(nvm_pool *ppool, nvm_tx *tx);
+    llvm::Value *GetFnNvmCommit(llvm::Module *mod);
   };
-  SmallVector<NvmTransactions, 8> NvmTransactionsStack;
+  SmallVector<NvmTransaction, 8> NvmTransactionsStack;
+  bool IsInNvmTx() const { return NvmTransactionsStack.size() != 0; }
+  NvmTransaction &GetCurNvmTx() { return *(NvmTransactionsStack.end()-1); }
+  void PushNvmTx(const NvmTransaction &tx) { NvmTransactionsStack.push_back(tx); }
+  void PopNvmTx() { NvmTransactionsStack.pop_back(); }
 
   /// Handles cancellation exit points in OpenMP-related constructs.
   class OpenMPCancelExitStack {

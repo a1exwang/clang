@@ -1660,18 +1660,30 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, Address Addr,
     return;
   }
 
-  // TODO: If Addr is NVM, generate NVM log writing functions
-  std::string s;
-  llvm::raw_string_ostream ss(s);
-  Addr.getPointer()->print(ss);
+  if (IsInNvmTx()) {
+    std::string s;
+    llvm::raw_string_ostream ss(s);
+    Addr.getPointer()->print(ss);
 
-  std::cout << "CGExpr.cpp:EmitStoreOfScalar(): Before CreateStore() \n  lhs: " << s << std::endl;
+    std::cout << "CGExpr.cpp: EmitStoreOfScalar(): In Nvm Tx \n  lhs: " << s << std::endl;
+    s = "";
+    Value->print(ss);
+    std::cout << "  rhs: " << s << std::endl;
+    auto &curTx = GetCurNvmTx();
+    auto FnNvmAdd = curTx.GetFnNvmAdd(&CGM.getModule());
 
-  s = "";
-  Value->print(ss);
-  std::cout << "  rhs: " << s << std::endl;
+    auto ConstSize = CGM.getModule().getDataLayout().getTypeAllocSize(Addr.getElementType());
+    llvm::Value* Params[] = {
+        Builder.CreatePointerCast(curTx.NvmPool, llvm::Type::getInt8PtrTy(Value->getContext(), 0)),
+        Builder.CreatePointerCast(curTx.NvmTx, llvm::Type::getInt8PtrTy(Value->getContext(), 0)),
+        Builder.CreatePointerCast(Addr.getPointer(), llvm::Type::getInt8PtrTy(Value->getContext(), 0)),
+        llvm::ConstantInt::get(llvm::Type::getInt64Ty(Value->getContext()), ConstSize)
+    };
+    Builder.CreateCall(FnNvmAdd, Params);
+  }
 
   llvm::StoreInst *Store = Builder.CreateStore(Value, Addr, Volatile);
+
   if (isNontemporal) {
     llvm::MDNode *Node =
         llvm::MDNode::get(Store->getContext(),

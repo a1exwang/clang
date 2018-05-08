@@ -570,6 +570,8 @@ void ASTStmtWriter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
 }
 
 void ASTStmtWriter::VisitNvmTxStmt(NvmTxStmt *S) {
+  Record.AddStmt(S->GetPool());
+  Record.AddStmt(S->GetTx());
   auto AS = S->GetAssociatedStmt();
   Record.AddStmt(AS);
 }
