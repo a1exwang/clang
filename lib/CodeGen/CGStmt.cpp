@@ -194,10 +194,9 @@ void CodeGenFunction::EmitStmt(const Stmt *S, ArrayRef<const Attr *> Attrs) {
   case Stmt::SEHTryStmtClass:
     EmitSEHTryStmt(cast<SEHTryStmt>(*S));
     break;
+
   case Stmt::NvmTxStmtClass:
-    EmitStmt(cast<NvmTxStmt>(*S).GetAssociatedStmt());
-//    llvm_unreachable(
-//        "unimplemented for NvmTxStmtClass error");
+    EmitNvmTxStmt(cast<NvmTxStmt>(*S));
     break;
 
   case Stmt::OMPParallelDirectiveClass:

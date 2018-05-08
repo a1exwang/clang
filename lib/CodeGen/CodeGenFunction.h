@@ -2668,6 +2668,8 @@ public:
   llvm::Value *EmitSEHExceptionInfo();
   llvm::Value *EmitSEHAbnormalTermination();
 
+  void EmitNvmTxStmt(const NvmTxStmt &S);
+
   /// Emit simple code for OpenMP directives in Simd-only mode.
   void EmitSimpleOMPExecutableDirective(const OMPExecutableDirective &D);
 
