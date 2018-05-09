@@ -1670,7 +1670,8 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, Address Addr,
     Value->print(ss);
     std::cout << "  rhs: " << s << std::endl;
     auto &curTx = GetCurNvmTx();
-    auto FnNvmAdd = curTx.GetFnNvmAdd(&CGM.getModule());
+    auto FnNvmAdd = curTx
+        .GetFnNvmAdd(&CGM.getModule());
 
     auto ConstSize = CGM.getModule().getDataLayout().getTypeAllocSize(Addr.getElementType());
     llvm::Value* Params[] = {
@@ -1679,7 +1680,8 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, Address Addr,
         Builder.CreatePointerCast(Addr.getPointer(), llvm::Type::getInt8PtrTy(Value->getContext(), 0)),
         llvm::ConstantInt::get(llvm::Type::getInt64Ty(Value->getContext()), ConstSize)
     };
-    Builder.CreateCall(FnNvmAdd, Params);
+    // TODO: fix this call
+//    Builder.CreateCall(FnNvmAdd, Params);
   }
 
   llvm::StoreInst *Store = Builder.CreateStore(Value, Addr, Volatile);

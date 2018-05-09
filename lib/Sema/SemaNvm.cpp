@@ -115,3 +115,15 @@ ExprResult Sema::ActOnPragmaNvmIdExpression(Scope *CurScope,
       /*RefersToEnclosingVariableOrCapture=*/false,
                              Id.getLoc(), ExprType, VK_LValue);
 }
+
+StmtResult Sema::ActOnPragmaNvmPtrDecl(StmtResult &Result, SourceLocation *StartLoc, SourceLocation *EndLoc) {
+  auto declStmt = cast<DeclStmt>(Result.get());
+  std::cerr << "ActOnPragmaNvmPtrDecl" << std::endl;
+  for (auto &decl : declStmt->decls()) {
+    auto varDecl = cast<VarDecl>(decl);
+    varDecl->addAttr(NvmPtrDeclAttr::CreateImplicit(Context, SourceRange(*StartLoc, *EndLoc)));
+    decl->dump();
+  }
+  std::cerr << "ActOnPragmaNvmPtrDecl end" << std::endl;
+  return Result;
+}

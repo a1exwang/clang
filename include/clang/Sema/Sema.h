@@ -8457,6 +8457,7 @@ public:
   bool checkNSReturnsRetainedReturnType(SourceLocation loc, QualType type);
 
   StmtResult ActOnPragmaNvm(StmtResult &Result, Expr *Pool, Expr *Tx, SourceLocation *loc);
+  StmtResult ActOnPragmaNvmPtrDecl(StmtResult &Result, SourceLocation *StartLoc, SourceLocation *EndLoc);
   ExprResult ActOnPragmaNvmIdExpression(Scope *CurScope,
                                         CXXScopeSpec &ScopeSpec,
                                         const DeclarationNameInfo &Id);

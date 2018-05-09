@@ -209,13 +209,11 @@ struct PragmaAttributeHandler : public PragmaHandler {
 struct PragmaNvmHandler :public PragmaHandler {
   PragmaNvmHandler()
         : PragmaHandler("nvm") {
-    std::cout << "PragmaNvmHandler()" << std::endl;
   }
   void HandlePragma(
       Preprocessor &PP,
       PragmaIntroducerKind Introducer,
       Token &FirstToken) override {
-    std::cout << "PragmaNvmHandler::HandlePragma()" << std::endl;
 
     SmallVector<Token, 16> Pragma;
     Token Tok;
@@ -237,7 +235,6 @@ struct PragmaNvmHandler :public PragmaHandler {
     std::copy(Pragma.begin(), Pragma.end(), Toks.get());
     PP.EnterTokenStream(std::move(Toks), Pragma.size(),
         /*DisableMacroExpansion=*/false);
-    std::cout << "PragmaNvmHandler::HandlePragma() returns" << std::endl;
   }
 
 };
