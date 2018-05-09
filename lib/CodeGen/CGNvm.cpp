@@ -32,7 +32,7 @@ llvm::Value *CodeGenFunction::NvmTransaction::GetFnNvmAdd(llvm::Module *mod) {
       {
         llvm::Type::getInt8PtrTy(mod->getContext()),
         llvm::Type::getInt8PtrTy(mod->getContext()),
-        llvm::PointerType::get(llvm::Type::getInt8PtrTy(mod->getContext()), 0),
+        llvm::Type::getInt8PtrTy(mod->getContext()),
         llvm::IntegerType::getInt64Ty(mod->getContext()),
       },
       false
@@ -65,7 +65,7 @@ llvm::Value *CodeGenFunction::NvmTransaction::GetFnNvmCommit(llvm::Module *mod){
 
 }
 
-void CodeGenFunction::EmitNvmTxAdd(Address Addr, bool isVolatile) {
+void CodeGenFunction::EmitNvmTxAdd(Address Addr, bool isVolatile, bool isPtrptr) {
   llvm::LLVMContext &C = getLLVMContext();
   std::string s;
   llvm::raw_string_ostream ss(s);
@@ -75,11 +75,18 @@ void CodeGenFunction::EmitNvmTxAdd(Address Addr, bool isVolatile) {
   auto &curTx = GetCurNvmTx();
   auto FnNvmAdd = curTx.GetFnNvmAdd(&CGM.getModule());
 
+  llvm::Value *ptr = nullptr;
+  if (isPtrptr) {
+    ptr = Builder.CreateLoad(Addr);
+  } else {
+    ptr = Addr.getPointer();
+  }
+
   auto ConstSize = CGM.getModule().getDataLayout().getTypeAllocSize(Addr.getElementType());
   llvm::Value* Params[] = {
       Builder.CreatePointerCast(curTx.NvmPool, llvm::Type::getInt8PtrTy(C, 0)),
       Builder.CreatePointerCast(curTx.NvmTx, llvm::Type::getInt8PtrTy(C, 0)),
-      Builder.CreatePointerCast(Addr.getPointer(), llvm::PointerType::get(llvm::Type::getInt8PtrTy(C, 0), 0)),
+      Builder.CreatePointerCast(ptr, llvm::Type::getInt8PtrTy(C, 0)),
       llvm::ConstantInt::get(llvm::Type::getInt64Ty(C), ConstSize)
   };
   // TODO: fix this call

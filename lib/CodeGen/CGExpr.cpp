@@ -2456,7 +2456,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     // TODO: Generate nvm_direct and nvm_add for NvmPtrs
     if (IsInNvmTx() && VD->hasAttr<NvmPtrDeclAttr>()) {
       std::cerr << "IsInNvmTx() and has NvmPtrDeclAttr: var :'" << VD->getName().str() << "'" << std::endl;
-      EmitNvmTxAdd(addr, false);
+      EmitNvmTxAdd(addr, false, true);
       std::cerr << "IsInNvmTx() and has NvmPtrDeclAttr: end " << std::endl;
     }
 
@@ -3401,8 +3401,17 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E,
   }
 
   // TODO: Generate NvmAdd
-  if (IsInNvmTx())
-    EmitNvmTxAdd(Addr, false);
+  // only hack for x[i] when x is a LValue
+  if (IsInNvmTx()) {
+    if (isa<ImplicitCastExpr>(*E->child_begin())) {
+      auto varDecl = *E->child_begin()->child_begin();
+      if (isa<DeclRefExpr>(varDecl)) {
+        if (cast<DeclRefExpr>(varDecl)->getDecl()->hasAttr<NvmPtrDeclAttr>()) {
+          EmitNvmTxAdd(Addr, false, false);
+        }
+      }
+    }
+  }
 
   LValue LV = MakeAddrLValue(Addr, E->getType(), EltBaseInfo, EltTBAAInfo);
 
