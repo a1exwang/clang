@@ -2682,6 +2682,7 @@ public:
   llvm::Value *EmitSEHAbnormalTermination();
 
   void EmitNvmTxStmt(const NvmTxStmt &S);
+  void EmitNvmTxAdd(Address Addr, bool isVolatile);
 
   /// Emit simple code for OpenMP directives in Simd-only mode.
   void EmitSimpleOMPExecutableDirective(const OMPExecutableDirective &D);

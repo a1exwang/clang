@@ -1661,27 +1661,7 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, Address Addr,
   }
 
   if (IsInNvmTx()) {
-    std::string s;
-    llvm::raw_string_ostream ss(s);
-    Addr.getPointer()->print(ss);
-
-    std::cout << "CGExpr.cpp: EmitStoreOfScalar(): In Nvm Tx \n  lhs: " << s << std::endl;
-    s = "";
-    Value->print(ss);
-    std::cout << "  rhs: " << s << std::endl;
-    auto &curTx = GetCurNvmTx();
-    auto FnNvmAdd = curTx
-        .GetFnNvmAdd(&CGM.getModule());
-
-    auto ConstSize = CGM.getModule().getDataLayout().getTypeAllocSize(Addr.getElementType());
-    llvm::Value* Params[] = {
-        Builder.CreatePointerCast(curTx.NvmPool, llvm::Type::getInt8PtrTy(Value->getContext(), 0)),
-        Builder.CreatePointerCast(curTx.NvmTx, llvm::Type::getInt8PtrTy(Value->getContext(), 0)),
-        Builder.CreatePointerCast(Addr.getPointer(), llvm::Type::getInt8PtrTy(Value->getContext(), 0)),
-        llvm::ConstantInt::get(llvm::Type::getInt64Ty(Value->getContext()), ConstSize)
-    };
-    // TODO: fix this call
-//    Builder.CreateCall(FnNvmAdd, Params);
+    std::cerr << "InNvmTx: gen store" << std::endl;
   }
 
   llvm::StoreInst *Store = Builder.CreateStore(Value, Addr, Volatile);
@@ -2473,6 +2453,12 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       llvm_unreachable("DeclRefExpr for Decl not entered in LocalDeclMap?");
     }
 
+    // TODO: Generate nvm_direct and nvm_add for NvmPtrs
+    if (IsInNvmTx() && VD->hasAttr<NvmPtrDeclAttr>()) {
+      std::cerr << "IsInNvmTx() and has NvmPtrDeclAttr: var :'" << VD->getName().str() << "'" << std::endl;
+      EmitNvmTxAdd(addr, false);
+      std::cerr << "IsInNvmTx() and has NvmPtrDeclAttr: end " << std::endl;
+    }
 
     // Check for OpenMP threadprivate variables.
     if (getLangOpts().OpenMP && !getLangOpts().OpenMPSimd &&
@@ -3413,6 +3399,10 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E,
                                  !getLangOpts().isSignedOverflowDefined(),
                                  SignedIndices, E->getExprLoc());
   }
+
+  // TODO: Generate NvmAdd
+  if (IsInNvmTx())
+    EmitNvmTxAdd(Addr, false);
 
   LValue LV = MakeAddrLValue(Addr, E->getType(), EltBaseInfo, EltTBAAInfo);
 

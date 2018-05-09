@@ -3,6 +3,7 @@
 #include "clang/Sema/Sema.h"
 
 #include <iostream>
+#include <clang/Parse/ParseDiagnostic.h>
 #include "clang/AST/StmtNvm.h"
 
 using namespace clang;
@@ -121,8 +122,12 @@ StmtResult Sema::ActOnPragmaNvmPtrDecl(StmtResult &Result, SourceLocation *Start
   std::cerr << "ActOnPragmaNvmPtrDecl" << std::endl;
   for (auto &decl : declStmt->decls()) {
     auto varDecl = cast<VarDecl>(decl);
-    varDecl->addAttr(NvmPtrDeclAttr::CreateImplicit(Context, SourceRange(*StartLoc, *EndLoc)));
+    if (!varDecl->getType()->isPointerType()) {
+      return StmtError();
+    }
     decl->dump();
+    std::cerr << "  addAttr for var '" << varDecl->getName().str() << "'" << std::endl;
+    varDecl->addAttr(NvmPtrDeclAttr::CreateImplicit(Context, SourceRange(*StartLoc, *EndLoc)));
   }
   std::cerr << "ActOnPragmaNvmPtrDecl end" << std::endl;
   return Result;

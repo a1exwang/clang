@@ -531,7 +531,12 @@ Retry:
           /*MightBeObjCMessageSend*/ true);
       auto R1 = ParseDeclaration(DeclaratorContext::BlockContext, DeclEnd, attrs);
       auto R = Actions.ActOnDeclStmt(R1, DeclStart, DeclEnd);
+
       auto SR = Actions.ActOnPragmaNvmPtrDecl(R, &DeclStart, &DeclEnd);
+      if (SR.isInvalid()) {
+        Diag(DeclStart, diag::err_invalid_pragma_nvm) << "pragma nvm nvmptr must be on a pointer type";
+        return StmtError();
+      }
       std::for_each(Annotations.begin(), Annotations.end(), free);
       std::cout << "ParseStmt annot_pragma_nvm for nvmptr decl success" << std::endl;
       return SR;
