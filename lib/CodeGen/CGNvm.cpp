@@ -4,6 +4,7 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/LLVMContext.h"
 #include <iostream>
+#include <llvm/Support/CommandLine.h>
 
 
 using namespace clang;

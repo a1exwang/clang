@@ -258,6 +258,8 @@ public:
   /// registers.
   std::string PreferVectorWidth;
 
+  bool PragamNvmEnableOpt;
+
 public:
   // Define accessors/mutators for code generation options of enumeration type.
 #define CODEGENOPT(Name, Bits, Default)

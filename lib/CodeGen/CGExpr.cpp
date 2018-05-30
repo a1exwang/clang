@@ -3402,11 +3402,15 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E,
 
   // TODO: Generate NvmAdd
   // only hack for x[i] when x is a LValue
+  std::cerr << "PragmaNvmEnableOpt: " << CGM.getCodeGenOpts().PragamNvmEnableOpt << std::endl;
   if (IsInNvmTx()) {
-    if (isa<ImplicitCastExpr>(*E->child_begin())) {
-      auto varDecl = *E->child_begin()->child_begin();
+    const auto &arrRef = *E->child_begin();
+    const auto &index = *(++E->child_begin());
+    if (isa<ImplicitCastExpr>(arrRef)) {
+      auto varDecl = *arrRef->child_begin();
       if (isa<DeclRefExpr>(varDecl)) {
-        if (cast<DeclRefExpr>(varDecl)->getDecl()->hasAttr<NvmPtrDeclAttr>()) {
+        if (!CGM.getCodeGenOpts().PragamNvmEnableOpt || cast<DeclRefExpr>(varDecl)->getDecl()->hasAttr<NvmPtrDeclAttr>()) {
+          std::cerr << "DeclRefExpr: EmitNvmTxAdd()" << std::endl;
           EmitNvmTxAdd(Addr, false, false);
         }
       }

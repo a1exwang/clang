@@ -620,6 +620,8 @@ def version : Flag<["-"], "version">,
 def main_file_name : Separate<["-"], "main-file-name">,
   HelpText<"Main file name to use for debug info">;
 
+def pragma_nvm_enable_opt: Flag<["-"], "pragma-nvm-enable-opt">,
+HelpText<"Enable NVM optimization">;
 }
 
 def fblocks_runtime_optional : Flag<["-"], "fblocks-runtime-optional">,

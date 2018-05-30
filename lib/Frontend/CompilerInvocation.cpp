@@ -717,6 +717,7 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.PreferVectorWidth = Args.getLastArgValue(OPT_mprefer_vector_width_EQ);
 
   Opts.MainFileName = Args.getLastArgValue(OPT_main_file_name);
+  Opts.PragamNvmEnableOpt = Args.hasArg(OPT_pragma_nvm_enable_opt);
   Opts.VerifyModule = !Args.hasArg(OPT_disable_llvm_verifier);
 
   Opts.DisableGCov = Args.hasArg(OPT_test_coverage);
