@@ -1661,7 +1661,13 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, Address Addr,
   }
 
   if (IsInNvmTx()) {
+    bool isOpt = CGM.getCodeGenOpts().PragamNvmEnableOpt;
+    if (!isOpt) {
+      this->EmitNvmTxAdd(Addr, false, false);
+    }
+
     std::cerr << "InNvmTx: gen store" << std::endl;
+    std::cerr << "gen store: isOpt, isNvm = " << isOpt << std::endl;
   }
 
   llvm::StoreInst *Store = Builder.CreateStore(Value, Addr, Volatile);
@@ -2454,10 +2460,20 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     }
 
     // TODO: Generate nvm_direct and nvm_add for NvmPtrs
-    if (IsInNvmTx() && VD->hasAttr<NvmPtrDeclAttr>()) {
-      std::cerr << "IsInNvmTx() and has NvmPtrDeclAttr: var :'" << VD->getName().str() << "'" << std::endl;
-      EmitNvmTxAdd(addr, false, true);
-      std::cerr << "IsInNvmTx() and has NvmPtrDeclAttr: end " << std::endl;
+    if (IsInNvmTx()) {
+      if (VD->getType()->isPointerType()) {
+        bool isOpt = CGM.getCodeGenOpts().PragamNvmEnableOpt;
+        bool isNvm = VD->hasAttr<NvmPtrDeclAttr>();
+        std::cerr << "isOpt, isNvm = " << isOpt << ", " << isNvm << std::endl;
+        if (!isOpt) {
+          std::cerr << "IsInNvmTx() and has NvmPtrDeclAttr: var :'" << VD->getName().str() << "'" << std::endl;
+          EmitNvmTxAdd(addr, false, true);
+        } else {
+
+          std::cerr << "IsInNvmTx() and has NvmPtrDeclAttr: var :'" << VD->getName().str() << "'" << std::endl;
+          EmitNvmTxAdd(addr, false, true);
+        }
+      }
     }
 
     // Check for OpenMP threadprivate variables.
@@ -3409,7 +3425,10 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E,
     if (isa<ImplicitCastExpr>(arrRef)) {
       auto varDecl = *arrRef->child_begin();
       if (isa<DeclRefExpr>(varDecl)) {
-        if (!CGM.getCodeGenOpts().PragamNvmEnableOpt || cast<DeclRefExpr>(varDecl)->getDecl()->hasAttr<NvmPtrDeclAttr>()) {
+        bool isNvm = cast<DeclRefExpr>(varDecl)->getDecl()->hasAttr<NvmPtrDeclAttr>();
+        bool isOpt = CGM.getCodeGenOpts().PragamNvmEnableOpt;
+        std::cout << "isOpt, isNvm = " << isOpt << ", " << isNvm << std::endl;
+        if (!isOpt || isNvm) {
           std::cerr << "DeclRefExpr: EmitNvmTxAdd()" << std::endl;
           EmitNvmTxAdd(Addr, false, false);
         }
